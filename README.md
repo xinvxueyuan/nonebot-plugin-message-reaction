@@ -1,23 +1,54 @@
 # nonebot-plugin-message-reaction
 
-消息表态（emoji reaction）工具库（抽取自 [zhenxun_bot](https://github.com/zhenxun-org/zhenxun_bot)
-`nonebot_plugin_parser_lite` 的 `constants.EMOJI_MAP` 与 `helper.UniHelper.message_reaction` /
-`with_reaction`）。**纯工具库形态**：不注册任何指令、不监听事件，
-只提供 API 供其他 NoneBot 插件 `import` 调用。
+消息表态（emoji reaction）工具库（抽取自 [zhenxun_bot](https://github.com/zhenxun-org/zhenxun_bot) 的 `nonebot_plugin_parser_lite`）：给其他 NoneBot2 插件提供三态表态（处理中 / 完成 / 失败）的 `message_reaction` API 与 `with_reaction` 装饰器，纯工具库、不带任何指令。
 
-适配器分派（OneBot `set_msg_emoji_like` / `set_group_reaction`、Telegram reaction 等）
-交给 [nonebot-plugin-alconna](https://github.com/nonebot/plugin-alconna) 的 `uniseg` 完成，
-本库不重复实现那张表。
+> **纯工具库形态**：不注册任何指令、不监听事件，只提供 API 供其他 NoneBot 插件 `import` 调用。
+> 适配器分派（OneBot `set_msg_emoji_like` / `set_group_reaction`、Telegram reaction 等）交给 [nonebot-plugin-alconna](https://github.com/nonebot/plugin-alconna) 的 `uniseg` 完成，本库不重复实现那张表。
+> 表态是锦上添花：任何失败只记 warning + 返回 `False`，绝不影响主流程。
 
-## 安装
+## 功能
+
+- 三态表态：`message_reaction(event, status)` 给触发事件的消息打一个 emoji 表态，成功返回 `True`；私聊 / 缺 alconna / 表态失败返回 `False`（绝不抛出）。
+- 三态装饰器：`with_reaction` 包 handler —— 进入打 `resolving`（处理中），正常结束打 `done`（完成），异常打 `fail`（失败）后原样上抛。
+- 双取值映射：`EMOJI_MAP` 为「状态 → `(OneBot 数字 ID, 其它适配器 Unicode)`」；OneBot 系（onebot11 / qq / milky）用数字 ID，其它适配器用 Unicode。
+- 状态字面量：`ReactionStatus = Literal["resolving", "done", "fail"]`。
+- 零强制 alconna：alconna 是可选 extra，模块加载时不导入；缺失时 `message_reaction` 记一次 warning 并返回 `False`，`with_reaction` 静默跳过表态。
+- 无副作用：插件加载不注册任何 Matcher / Hook，纯库形态可安全 `import`。
+
+## 依赖与安装
+
+- 运行依赖（以 `pyproject.toml` 的 `dependencies` 为准）：`nonebot2 >= 2.5.0`、`nonebot-adapter-onebot >= 2.4.6`。
+- （可选）额外依赖：`nonebot-plugin-alconna >= 0.62.0`（extra `alconna`，跨平台表态能力，推荐）。
+- Python：`>= 3.10`。
+- 安装：
 
 ```bash
 pip install nonebot-plugin-message-reaction            # 核心（无 alconna 时表态降级为 no-op）
 pip install 'nonebot-plugin-message-reaction[alconna]'  # 附跨平台表态能力（推荐）
 ```
 
-本仓库为源码权威（`uv` 工程），直接集成时也可把
-`src/plugins/nonebot_plugin_message_reaction/` 拷入目标工程的 plugins 目录。
+- 安装（宿主以 git 子模块引入）：
+
+```bash
+git submodule add -b main https://github.com/xinvxueyuan/nonebot-plugin-message-reaction.git \
+  vendor/nonebot-plugin-message-reaction
+git -C vendor/nonebot-plugin-message-reaction checkout <钉定的 SHA>
+```
+
+- 宿主 `[tool.nonebot] plugin_dirs` 加一行 `vendor/nonebot-plugin-message-reaction/src/plugins`
+  （本仓自带的 `plugin_dirs = ["src/plugins"]` 是插件独立开发时用的；仓库实际布局 `src/plugins/nonebot_plugin_message_reaction`）。
+- 本仓库为源码权威（`uv` 工程），直接集成时也可把
+  `src/plugins/nonebot_plugin_message_reaction/` 拷入目标工程的 plugins 目录。
+
+## 测试与门禁
+
+```bash
+uv run python -m pytest tests/ -q
+uv run ruff check . && uv run ruff format --check .
+uv run pyright
+```
+
+`tests/` 用 fake event + monkeypatch `nonebot_plugin_alconna.uniseg` 覆盖「`message_reaction` 行为」表的每一行与 `with_reaction` 的控制流判定，不连真实 QQ。
 
 ## 快速开始
 
@@ -90,3 +121,7 @@ ok = await message_reaction(event, "resolving")  # -> bool
 | `EMOJI_MAP` | `nonebot_plugin_parser_lite/constants.py` |
 | `message_reaction` | `nonebot_plugin_parser_lite/helper.py` `UniHelper.message_reaction` |
 | `with_reaction` | `nonebot_plugin_parser_lite/helper.py` `UniHelper.with_reaction` |
+
+## 许可
+
+MIT（见 `pyproject.toml` 的 `license` 字段；仓库暂未附 `LICENSE` 文件）。
