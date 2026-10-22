@@ -143,7 +143,7 @@ uv run pyright
 
 ## 许可证与相关仓库
 
-- **许可证**：`MIT`（`pyproject.toml` 的 `license = { text = "MIT" }`；仓库暂未附 `LICENSE` 文件）。
+- **许可证**：`MIT`（见仓库根目录 `LICENSE` 文件，Copyright (c) 2026 新v学员 (xinvxueyuan)；`pyproject.toml` 的 `license = { text = "MIT" }`）。
 - **相关仓库**：
   - [xinvxueyuan/qbot](https://github.com/xinvxueyuan/qbot) —— 宿主，以 `vendor/` 子模块引入本库。
   - [xinvxueyuan/nonebot-plugin-pixiv-novel](https://github.com/xinvxueyuan/nonebot-plugin-pixiv-novel) —— 用 `@with_reaction` / `message_reaction` 给「拉取-发卡片」流程打三态表态。
